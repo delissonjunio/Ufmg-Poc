@@ -136,3 +136,6 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Large files
+poc1-app/src/assets/data/*
