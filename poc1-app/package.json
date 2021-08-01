@@ -2,10 +2,13 @@
   "name": "poc1-app",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://delissonjunio.github.io/Ufmg-Poc-1",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "predeploy": "yarn run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "bootstrap": "^5.0.2",
@@ -35,6 +38,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.3.1",
     "eslint-plugin-vue": "^7.6.0",
+    "gh-pages": "^3.2.3",
     "vue-template-compiler": "^2.6.11"
   }
 }
