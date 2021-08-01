@@ -5,6 +5,7 @@
 <script>
 import { scaleLinear } from 'd3-scale'
 import * as d3 from 'd3'
+import { annotation, annotationLabel } from 'd3-svg-annotation'
 import jStat from 'jstat'
 
 export default {
@@ -12,7 +13,9 @@ export default {
   props: {
     mean: Number,
     standardDeviation: Number,
-    confidenceInterval: Number
+    confidenceInterval: Number,
+    var: Number,
+    cvar: Number
   },
   data: function() {
     const margin = { top: 20, right: 30, bottom: 30, left: 40 }
@@ -76,9 +79,24 @@ export default {
 
       svg
         .append('line')
-        .attr('class', 'annotation')
+        .attr('class', 'annotationvar')
         .attr('stroke', 'red')
         .attr('stroke-width', '3')
+
+      svg
+        .append('line')
+        .attr('class', 'annotationcvar')
+        .attr('stroke', 'red')
+        .attr('stroke-width', '3')
+
+      svg.append('g').attr('class', 'annotationsvg')
+
+      svg
+        .append('text')
+        .attr('class', 'midchart')
+        .attr('dy', '0.35em')
+        .attr('text-anchor', 'middle')
+        .text('Distribuição normal de retornos')
 
       return svg
     },
@@ -114,11 +132,56 @@ export default {
         .style('text-anchor', 'start')
 
       this.svg
-        .select('line.annotation')
+        .select('line.annotationvar')
         .attr('y1', this.y(0))
-        .attr('y2', this.y(this.YatConfidence))
-        .attr('x1', this.x(this.valueAtConfidence))
-        .attr('x2', this.x(this.valueAtConfidence))
+        .attr('y2', this.y(this.YatVar))
+        .attr('x1', this.x(this.valueAtVar))
+        .attr('x2', this.x(this.valueAtVar))
+
+      this.svg
+        .select('line.annotationcvar')
+        .attr('y1', this.y(0))
+        .attr('y2', this.y(this.YatCvar))
+        .attr('x1', this.x(this.valueAtCvar))
+        .attr('x2', this.x(this.valueAtCvar))
+
+      const annotations = [
+        {
+          note: {
+            label: `Risco calculado: ${this.$options.filters.currency(this.mean - this.valueAtVar)}`,
+            bgPadding: 20,
+            title: 'VaR'
+          },
+          data: { q: this.valueAtVar, p: this.YatVar },
+          dy: -80,
+          dx: -80
+        },
+        {
+          note: {
+            label: `Risco calculado: ${this.$options.filters.currency(this.mean - this.valueAtCvar)}`,
+            bgPadding: 20,
+            title: 'CVaR'
+          },
+          data: { q: this.valueAtCvar, p: this.YatCvar },
+          dy: -80,
+          dx: -80
+        }
+      ]
+
+      const annotationMaker = annotation()
+        .editMode(true)
+        .notePadding(15)
+        .type(annotationLabel)
+        .accessors({ x: d => this.x(d.q), y: d => this.y(d.p) })
+        .accessorsInverse({ x: d => this.x.invert(d.q), y: d => this.y.invert(d.p) })
+        .annotations(annotations)
+
+      this.svg.select('g.annotationsvg').call(annotationMaker)
+
+      this.svg
+        .select('text.midchart')
+        .attr('x', d => this.x(this.minD + (this.maxD - this.minD) / 2))
+        .attr('y', d => this.y(this.maxP * 0.3))
     }
   },
   computed: {
@@ -144,7 +207,7 @@ export default {
     normalDistributionUpToConfidence() {
       const data = []
       const minIteration = this.mean - 4 * this.standardDeviation
-      const maxIteration = this.valueAtConfidence
+      const maxIteration = this.valueAtVar
       const iterationStep = (maxIteration - minIteration) / 100
 
       for (let i = minIteration; i < maxIteration; i += iterationStep) {
@@ -157,7 +220,7 @@ export default {
         data.push(arr)
       }
 
-      data.push({ q: data[data.length - 1].q + 1, p: 0 })
+      data.push({ q: data[data.length - 1].q, p: 0 })
 
       return data
     },
@@ -174,13 +237,20 @@ export default {
       return d3.max(this.normalDistribution, d => d.p)
     },
 
-    valueAtConfidence() {
-      console.log('calling valueAtConfidence')
-      return jStat.normal.inv(this.confidenceInterval, this.mean, this.standardDeviation)
+    valueAtVar() {
+      return this.mean - this.var
     },
 
-    YatConfidence() {
-      return jStat.normal.pdf(this.valueAtConfidence, this.mean, this.standardDeviation)
+    valueAtCvar() {
+      return this.mean - this.cvar
+    },
+
+    YatVar() {
+      return jStat.normal.pdf(this.valueAtVar, this.mean, this.standardDeviation)
+    },
+
+    YatCvar() {
+      return jStat.normal.pdf(this.valueAtCvar, this.mean, this.standardDeviation)
     }
   },
   watch: {
@@ -188,6 +258,9 @@ export default {
       this.updateChart()
     },
     standardDeviation: function() {
+      this.updateChart()
+    },
+    confidenceInterval: function() {
       this.updateChart()
     }
   }

@@ -37,8 +37,13 @@
 
         <b-row class="my-3">
           <div class="mt-2" v-if="parametricVar === parametricVar">
-            Com {{ confidenceInterval | percent }} de certeza, esse investimento não irá perder mais do que
-            {{ parametricVar | currency }} no período calculado.
+            Para o VaR, com {{ confidenceInterval | percent }} de certeza, esse investimento não irá perder mais do que
+            {{ parametricVar | currency }} no período calculado, representando uma perda de {{ (varLossPercentage * 100) | percent }}
+          </div>
+
+          <div class="mt-2" v-if="parametricCvar === parametricCvar">
+            Já para o CVaR, com {{ confidenceInterval | percent }} de certeza, esse investimento não irá perder mais do que
+            {{ parametricCvar | currency }} no período calculado, representando uma perda de {{ (cvarLossPercentage * 100) | percent }}
           </div>
         </b-row>
       </b-col>
@@ -46,7 +51,9 @@
         <ParametricChart
           :mean="investedAmount"
           :standard-deviation="investedAmount * (standardDeviation / 100.0)"
-          :confidence-interval="1 - confidenceInterval / 100.0"
+          :confidence-interval="1 - unitConfidenceInterval"
+          :var="parametricVar"
+          :cvar="parametricCvar"
         ></ParametricChart>
       </b-col>
     </b-row>
@@ -58,7 +65,7 @@ import { inverseErrorFunction } from 'simple-statistics'
 import ParametricChart from '@/components/ParametricChart'
 
 export default {
-  name: 'ParametricVar',
+  name: 'ParametricVarCVar',
   components: { ParametricChart },
   data: () => ({
     confidenceInterval: 95,
@@ -66,10 +73,57 @@ export default {
     standardDeviation: 7
   }),
   computed: {
-    parametricVar() {
+    varZScore() {
       if (this.confidenceInterval && this.investedAmount && this.standardDeviation) {
-        const ZScore = inverseErrorFunction((this.confidenceInterval / 100.0 - 0.5) / 0.5) * Math.sqrt(2)
-        return this.investedAmount * ZScore * (this.standardDeviation / 100.0)
+        return inverseErrorFunction((this.confidenceInterval / 100.0 - 0.5) / 0.5) * Math.sqrt(2)
+      }
+
+      return 0.0
+    },
+
+    cvarZScore() {
+      if (this.varZScore) {
+        return (1.0 / (1 - this.unitConfidenceInterval)) * (1.0 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * this.varZScore)
+      }
+
+      return 0.0
+    },
+
+    parametricVar() {
+      if (this.varZScore) {
+        return this.investedAmount * this.varZScore * (this.standardDeviation / 100.0)
+      }
+
+      return 0.0
+    },
+
+    varLossPercentage() {
+      if (this.parametricVar && this.investedAmount) {
+        return 1 - (this.investedAmount - this.parametricVar) / this.investedAmount
+      }
+
+      return 0.0
+    },
+
+    cvarLossPercentage() {
+      if (this.parametricCvar && this.investedAmount) {
+        return 1 - (this.investedAmount - this.parametricCvar) / this.investedAmount
+      }
+
+      return 0.0
+    },
+
+    unitConfidenceInterval() {
+      if (this.confidenceInterval) {
+        return this.confidenceInterval / 100.0
+      }
+
+      return 1
+    },
+
+    parametricCvar() {
+      if (this.cvarZScore) {
+        return this.investedAmount * this.cvarZScore * (this.standardDeviation / 100.0)
       }
 
       return 0.0
