@@ -30,6 +30,13 @@
       <ParametricVarCVar />
     </div>
 
+    <div class="mt-5">
+      Já o próximo widget utiliza dados extraídos do site da B3 para fazer o cálculo de VaR/CVaR para um ou mais ativos. Os dados disponíveis são
+      blablabla.
+
+      <HistoricVarCVar />
+    </div>
+
     <footer>
       <p>
         [1] VALUE AT RISK. In: WIKIPÉDIA, a enciclopédia livre. Flórida: Wikimedia Foundation, 2020. Disponível em: &lt;<a
@@ -45,11 +52,12 @@
 
 <script>
 import ParametricVarCVar from './components/ParametricVarCVar.vue'
+import HistoricVarCVar from './components/HistoricVarCVar.vue'
 
 export default {
   name: 'MainPage',
   components: {
-    ParametricVarCVar
+    ParametricVarCVar, HistoricVarCVar
   }
 }
 </script>
