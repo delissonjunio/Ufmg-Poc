@@ -30,9 +30,12 @@
       <ParametricVarCVar />
     </div>
 
+    <hr>
+
     <div class="mt-5">
       Já o próximo widget utiliza dados extraídos do site da B3 para fazer o cálculo de VaR/CVaR para um ou mais ativos. Os dados disponíveis são
-      blablabla.
+      os retornos de todos os ativos listados na B3 nos anos de 2020, 2019, 2018 e 2017. É possível escolher quais ativos serão utilizados e qual
+      será o peso de cada um na simulação, assim como quantos anos serão utilizados na simulação (sempre do mais recente pro mais antigo)
 
       <HistoricVarCVar />
     </div>

@@ -19,11 +19,18 @@ export default {
   },
   data: function() {
     const margin = { top: 20, right: 30, bottom: 30, left: 40 }
+    const viewportWidth = 960
+    const viewportHeight = 450
+
+    const width = 960
+    const height = 350
 
     return {
       margin,
-      width: 960 - margin.left - margin.right,
-      height: 350 - margin.top - margin.bottom,
+      width: width - margin.left - margin.right,
+      height: height - margin.top - margin.bottom,
+      viewportWidth,
+      viewportHeight,
       svg: null,
       x: null,
       y: null
@@ -48,14 +55,11 @@ export default {
         .range([this.height, 0])
     },
     generateChart() {
-      const totalXExtent = this.width + this.margin.left + this.margin.right
-      const totalYExtent = this.width + this.margin.top + this.margin.bottom
-
       const svg = d3
         .select(this.$refs.svgContainer)
         .append('svg')
         .attr('preserveAspectRatio', 'xMinYMin meet')
-        .attr('viewBox', `0 0 ${totalXExtent} ${totalYExtent}`)
+        .attr('viewBox', `0 0 ${this.viewportWidth} ${this.viewportHeight}`)
         .append('g')
         .attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')')
 

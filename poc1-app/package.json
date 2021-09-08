@@ -21,6 +21,8 @@
     "d3-svg-annotation": "^2.5.1",
     "highcharts-vue": "^1.4.0",
     "jstat": "^1.9.4",
+    "lodash": "^4.17.21",
+    "papaparse": "^5.3.1",
     "sass": "^1.37.0",
     "sass-loader": "^12.1.0",
     "simple-statistics": "^7.7.0",
@@ -40,6 +42,9 @@
     "eslint-plugin-promise": "^4.3.1",
     "eslint-plugin-vue": "^7.6.0",
     "gh-pages": "^3.2.3",
-    "vue-template-compiler": "^2.6.11"
+    "promise-worker": "^2.0.1",
+    "vue-template-compiler": "^2.6.11",
+    "worker-loader": "^3.0.8",
+    "worker-plugin": "^5.0.1"
   }
 }
