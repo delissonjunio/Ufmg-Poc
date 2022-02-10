@@ -4,7 +4,8 @@ export default {
   state: {
     availableStocks: [],
     availableYears: [],
-    stockReturns: {}
+    stockReturns: {},
+    apiTickers: {}
   },
   mutations: {
     loadReturns(state, returns) {
@@ -15,6 +16,9 @@ export default {
     },
     loadYears(state, years) {
       state.availableYears = years
+    },
+    loadApiTickers(state, tickers) {
+      state.apiTickers = tickers
     }
   },
   actions: {
@@ -25,8 +29,27 @@ export default {
       commit('loadReturns', data.dailyReturnsByStock)
       commit('loadTickers', data.availableStocks)
       commit('loadYears', data.availableYears.sort())
+    },
 
-      console.info('loaded all!')
+    async loadApiTickers({ commit }) {
+      const response = await fetch('api/tickers')
+      const body = await response.json()
+      commit('loadApiTickers', body.tickers)
+    },
+
+    async optimizePortfolio(store, { beta, target, method, value, portfolio = [] }) {
+      let parsedPortfolio = null
+      if (portfolio && portfolio.length) {
+        parsedPortfolio = portfolio.join(',')
+      }
+      const params = {
+        beta,
+        target,
+        value,
+        portfolio: parsedPortfolio
+      }
+
+      await fetch(`/api/optimize/${method}?` + new URLSearchParams(params))
     },
 
     calculateBottomPercentOfReturns({ state }, { selectedStocks, simulationPeriodYears, bottomPercent }) {
@@ -52,8 +75,6 @@ export default {
       // Find the bottom percent of returns
       allReturns.sort((a, b) => a - b)
       const bottomPercentOfReturns = allReturns[Math.ceil(bottomPercent * allReturns.length)]
-      console.log(`bottom percent: ${bottomPercent}`)
-      console.log(`final result: ${bottomPercentOfReturns} is the bottom ${bottomPercent} of all ${allReturns.length} returns`)
       return bottomPercentOfReturns
     }
   }

@@ -14,6 +14,16 @@ module.exports = {
       entry: 'src/main.js',
       title: 'POC I - Délisson Silva'
     }
+  },
+  devServer: {
+    proxy: {
+      '^/api': {
+        target: 'http://localhost:5000/',
+        changeOrigin: true,
+        pathRewrite: {
+          '^/api': '/'
+        }
+      }
+    }
   }
-
 }

@@ -40,6 +40,14 @@
       <HistoricVarCVar />
     </div>
 
+    <hr>
+
+    <div class="mt-5">
+      Na seção abaixo, utilizamos algoritmos de programação linear para otimizar o problema do CVaR de forma a atingir um objetivo desejado.
+
+      <CVarOptimization />
+    </div>
+
     <footer>
       <p>
         [1] VALUE AT RISK. In: WIKIPÉDIA, a enciclopédia livre. Flórida: Wikimedia Foundation, 2020. Disponível em: &lt;<a
@@ -56,11 +64,14 @@
 <script>
 import ParametricVarCVar from './components/ParametricVarCVar.vue'
 import HistoricVarCVar from './components/HistoricVarCVar.vue'
+import CVarOptimization from './components/CVarOptimization.vue'
 
 export default {
   name: 'MainPage',
   components: {
-    ParametricVarCVar, HistoricVarCVar
+    CVarOptimization,
+    ParametricVarCVar,
+    HistoricVarCVar
   }
 }
 </script>

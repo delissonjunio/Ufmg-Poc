@@ -1,38 +1,30 @@
 #!/bin/python3
 
 import csv
+import datetime
 import sys
-import json
-from collections import Counter
+from collections import defaultdict
+from typing import Dict
 
+ALLOWED_YEARS = [2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012]
 
-ALLOWED_YEARS = ['2020', '2019', '2018', '2017', '2016']
-
-returns_by_ticker = {}
+output_writer = csv.writer(sys.stdout)
+stock_price_by_date: Dict[datetime.datetime, Dict[str, str]] = defaultdict(dict)
+tickers = set()
 with open(sys.argv[1]) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-        day_return = float(row['close']) / float(row['open'])
-        date, ticker = row['datetime'], row['ticker']
+        ticker = row['ticker'].replace(' ', '')
+        date = datetime.datetime.strptime(row['datetime'], '%Y-%m-%d')
 
-        year = date.split('-')[0]
-        if year not in ALLOWED_YEARS:
+        if date.year not in ALLOWED_YEARS:
             continue
 
-        if ticker not in returns_by_ticker:
-            returns_by_ticker[ticker] = {year: []}
-        elif year not in returns_by_ticker[ticker]:
-            returns_by_ticker[ticker][year] = []
+        tickers.add(ticker)
+        stock_price_by_date[date][ticker] = row['close']
 
-        returns_by_ticker[ticker][year].append(round(day_return, 4))
+tickers = list(tickers)
+output_writer.writerow(['date'] + tickers)
+for date, prices in sorted(stock_price_by_date.items(), key=lambda item: item[0]):
+    output_writer.writerow([date.strftime("%Y-%m-%d")] + [prices.get(ticker, '') for ticker in tickers])
 
-ticker_list = list(returns_by_ticker.keys())
-year_list = set(sum([list(data.keys()) for data in list(returns_by_ticker.values())], []))
-
-rv = {
-    "dailyReturnsByStock": returns_by_ticker,
-    "availableStocks": ticker_list,
-    "availableYears": list(year_list)
-}
-
-print(json.dumps(rv, separators=(',', ':')))
