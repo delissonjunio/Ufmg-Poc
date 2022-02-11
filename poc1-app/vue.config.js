@@ -12,7 +12,7 @@ module.exports = {
   pages: {
     index: {
       entry: 'src/main.js',
-      title: 'POC I - Délisson Silva'
+      title: 'POC II - Délisson Silva'
     }
   },
   devServer: {

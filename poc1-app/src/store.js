@@ -5,7 +5,8 @@ export default {
     availableStocks: [],
     availableYears: [],
     stockReturns: {},
-    apiTickers: {}
+    apiTickers: {},
+    optimizationResults: {}
   },
   mutations: {
     loadReturns(state, returns) {
@@ -19,6 +20,9 @@ export default {
     },
     loadApiTickers(state, tickers) {
       state.apiTickers = tickers
+    },
+    loadOptimizationResults(state, results) {
+      state.optimizationResults = results
     }
   },
   actions: {
@@ -37,19 +41,20 @@ export default {
       commit('loadApiTickers', body.tickers)
     },
 
-    async optimizePortfolio(store, { beta, target, method, value, portfolio = [] }) {
-      let parsedPortfolio = null
-      if (portfolio && portfolio.length) {
-        parsedPortfolio = portfolio.join(',')
-      }
+    async optimizePortfolio({ commit }, { beta, target, method, value, portfolio = [] }) {
       const params = {
         beta,
         target,
-        value,
-        portfolio: parsedPortfolio
+        value
       }
 
-      await fetch(`/api/optimize/${method}?` + new URLSearchParams(params))
+      if (portfolio && portfolio.length) {
+        params.portfolio = portfolio.join(',')
+      }
+
+      const response = await fetch(`/api/optimize/${method}?` + new URLSearchParams(params))
+      const body = await response.json()
+      commit('loadOptimizationResults', body)
     },
 
     calculateBottomPercentOfReturns({ state }, { selectedStocks, simulationPeriodYears, bottomPercent }) {

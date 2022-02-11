@@ -32,6 +32,19 @@
             <b-form-select v-model="method" :options="OPTIMIZATION_METHODS"></b-form-select>
           </b-col>
         </b-row>
+
+        <b-row class="my-3" v-if="method === 'efficient_risk' || method === 'efficient_return'">
+          <b-col sm="5">
+            <label for="optimization-target">
+              <template v-if="method === 'efficient_risk'">Risco máximo</template><template v-else>Retorno</template> desejado:
+            </label>
+          </b-col>
+          <b-col sm="7">
+            <b-input-group append="%" class="mb-2 mr-sm-2 mb-sm-0">
+              <b-form-input v-model="target100" id="optimization-target" number type="number"></b-form-input>
+            </b-input-group>
+          </b-col>
+        </b-row>
       </b-col>
       <b-col size="7">
         <b-row>
@@ -65,9 +78,50 @@
     </b-row>
 
     <b-row class="my-3">
-      <div class="mt-2" v-if="optimizedCVaR === optimizedCVaR && optimizedCVaR !== 0">
-        Para o VaR, com {{ beta100 | percent }} de certeza, esse investimento não irá perder mais do que
-        {{ (investedAmount - (optimizedCVaR * investedAmount)) | currency }} em um dia, representando uma perda de {{ ((1 - optimizedCVaR) * 100) | percent }}
+      <div class="mt-2" v-if="optimizationResults.conditional_value_at_risk">
+        Para o CVaR, com {{ optimizationResults.beta * 100 | percent }} de certeza, esse investimento não irá perder mais do que
+        {{ optimizationResults.conditional_value_at_risk * optimizationResults.invested | currency }} em um dia, representando uma perda de {{ optimizationResults.conditional_value_at_risk * 100 | percent }}.
+        O retorno anual esperado para esse portfólio é de {{ optimizationResults.expected_annual_return * 100 | percent }}, ou {{ optimizationResults.expected_annual_return * optimizationResults.invested | currency }}.
+      </div>
+
+      <b-alert show v-if="optimizationResults.error && optimizationResults.code && !busy" variant="warning">
+        Não foi possível otimizar um portfólio. Tente aumentar o risco/diminuir o retorno esperado.
+      </b-alert>
+
+      <div class="mt-2" v-if="(!optimizationResults.error && !optimizationResults.code) || busy">
+        <b-table
+          striped
+          hover
+          :busy="busy"
+          :items="resultPortfolio"
+          :fields="OPTIMIZATION_RESULT_FIELDS"
+          :foot-clone="true"
+          :label-sort-asc="''"
+          :label-sort-clear="''"
+          :label-sort-desc="''"
+          :no-footer-sorting="true">
+          <template #cell(price)="data">
+            {{ apiTickers[data.item.ticker] | currency }}
+          </template>
+
+          <template #cell(totalInvested)="data">
+            {{ apiTickers[data.item.ticker] * data.item.count | currency }}
+          </template>
+
+          <template #foot(totalInvested)>
+            <span v-if="optimizationResults.leftover">{{ investedAmount - optimizationResults.leftover | currency }}</span>
+          </template>
+
+          <template #foot()>
+            <i></i>
+          </template>
+
+          <template #table-busy>
+            <div class="text-center my-2">
+              <b-spinner class="align-middle"></b-spinner>
+            </div>
+          </template>
+        </b-table>
       </div>
     </b-row>
   </b-container>
@@ -78,9 +132,38 @@ import { mapState } from 'vuex'
 import _ from 'lodash'
 
 const OPTIMIZATION_METHODS = [
-  { value: 'min_cvar', text: 'Minimizar o CVaR' },
+  { value: 'min_cvar', text: 'Minimizar o risco' },
   { value: 'efficient_risk', text: 'Maximizar retorno para risco' },
-  { value: 'efficient_return', text: 'Minizar risco para retorno' }
+  { value: 'efficient_return', text: 'Minimizar risco para retorno' }
+]
+
+const OPTIMIZATION_RESULT_FIELDS = [
+  {
+    key: 'ticker',
+    label: 'Nome do ativo',
+    sortable: true
+  },
+  {
+    key: 'count',
+    label: 'Quantidade',
+    sortable: true,
+    thClass: 'text-end',
+    tdClass: 'text-end'
+  },
+  {
+    key: 'price',
+    label: 'Valor unitário',
+    sortable: false,
+    thClass: 'text-end',
+    tdClass: 'text-end'
+  },
+  {
+    key: 'totalInvested',
+    label: 'Total a investir',
+    sortable: true,
+    thClass: 'text-end',
+    tdClass: 'text-end'
+  }
 ]
 
 export default {
@@ -91,17 +174,25 @@ export default {
     investedAmount: 10000,
     target100: 7,
     portfolio: [],
-    optimizedCVaR: 0,
+    busy: false,
     method: OPTIMIZATION_METHODS[0].value,
-    OPTIMIZATION_METHODS
+    OPTIMIZATION_METHODS,
+    OPTIMIZATION_RESULT_FIELDS
   }),
   async mounted() {
     await this.$store.dispatch('loadApiTickers')
   },
   computed: {
-    ...mapState(['apiTickers']),
+    ...mapState(['apiTickers', 'optimizationResults']),
     availableStocks() {
       return _.pickBy(this.apiTickers, (v, k) => this.portfolio.indexOf(k) === -1)
+    },
+    resultPortfolio() {
+      if (this.optimizationResults.portfolio) {
+        return Object.entries(this.optimizationResults.portfolio).map(([k, v]) => ({ ticker: k, count: v }))
+      }
+
+      return []
     }
   },
   methods: {
@@ -114,7 +205,12 @@ export default {
         value: this.investedAmount
       }
 
-      await this.$store.dispatch('optimizePortfolio', payload)
+      this.busy = true
+      try {
+        await this.$store.dispatch('optimizePortfolio', payload)
+      } finally {
+        this.busy = false
+      }
     },
     addSelectedStock() {
       if (this.ticker) {
