@@ -1,0 +1,2 @@
+Arquivos selic.csv, usd2brl.csv e b3_stocks_1994_2020.csv obtidos de https://www.kaggle.com/felsal/ibovespa-stocks, acesso em 31/07/2021. Licenciado em GLP-2.
+Arquivo COTAHIST_A2021.txt obtido de http://www.b3.com.br/en_us/market-data-and-indices/data-services/market-data/historical-data/equities/historical-quotes/

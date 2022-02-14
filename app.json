@@ -1,0 +1,25 @@
+{
+  "name": "POC II",
+  "description": "Otimização de risco em portfólios financeiros com algoritmos de programação linear",
+  "keywords": [],
+  "website": "https://delissonjunio.github.io/Ufmg-Poc",
+  "repository": "https://github.com/delissonjunio/Ufmg-Poc",
+  "scripts": {
+    "postdeploy": "bundle exec rake bootstrap"
+  },
+  "buildpacks": [
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-nodejs"
+    },
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-static"
+    }
+  ],
+  "environments": {
+    "test": {
+      "scripts": {
+        "test": "bundle exec rake test"
+      }
+    }
+  }
+}
