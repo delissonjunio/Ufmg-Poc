@@ -18,6 +18,7 @@ pandas==1.4.0
 Pillow==9.0.0
 pyparsing==3.0.7
 pyportfolioopt==1.5.1
+PySCIPOpt==4.0.0
 python-dateutil==2.8.2
 pytz==2021.3
 qdldl==0.1.5.post0
